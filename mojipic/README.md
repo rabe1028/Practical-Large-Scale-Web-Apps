@@ -15,3 +15,11 @@ $ nodebrew use v10.14.2
 # check node version
 $ node -v
 ```
+
+## Build
+
+### frontend
+
+```
+node_modules/.bin/webpack --config conf/webpack.config.js
+```
