@@ -8,6 +8,8 @@ import scalikejdbc._
 import scala.concurrent.Future
 import scala.util.Try
 
+import java.time.LocalDateTime
+
 class PicturePropertyRepositoryImpl extends PicturePropertyRepository {
 
   def create(value: PictureProperty.Value): Future[PictureId] =
@@ -104,4 +106,52 @@ class PicturePropertyRepositoryImpl extends PicturePropertyRepository {
         }
       }
     })
+
+  def findAllByTwitterIdAndDateTime(twitterId: TwitterId, toDateTime: LocalDateTime): Future[Seq[PictureProperty]] =
+    Future.fromTry(Try {
+      using(DB(ConnectionPool.borrow())) { db =>
+        db.readOnly { implicit session =>
+          val sql =
+            sql"""SELECT
+             | picture_id,
+             | status,
+             | twitter_id,
+             | file_name,
+             | content_type,
+             | overlay_text,
+             | overlay_text_size,
+             | original_filepath,
+             | converted_filepath,
+             | created_time
+             | FROM picture_properties
+             | WHERE twitter_id = ${twitterId.value} AND created_time > ${toDateTime} ORDER BY created_time DESC
+          """.stripMargin
+          sql.map(resultSetToPictureProperty).list().apply()
+        }
+      }
+    })
+  
+  def findAllByDateTime(toDateTime: LocalDateTime): Future[Seq[PictureProperty]] =
+    Future.fromTry(Try {
+      using(DB(ConnectionPool.borrow())) { db =>
+        db.readOnly { implicit session =>
+          val sql =
+            sql"""SELECT
+             | picture_id,
+             | status,
+             | twitter_id,
+             | file_name,
+             | content_type,
+             | overlay_text,
+             | overlay_text_size,
+             | original_filepath,
+             | converted_filepath,
+             | created_time
+             | FROM picture_properties WHERE created_time > ${toDateTime} ORDER BY created_time DESC
+          """.stripMargin
+          sql.map(resultSetToPictureProperty).list().apply()
+        }
+      }
+    })
+  
 }
